@@ -57,11 +57,11 @@ export default async function handler(req, res) {
 
     // --- PERUBAHAN BESAR: Mengambil data LIST, bukan lagi activity ---
     const lists = await anilist.lists.anime(userId);
-
+    console.log("--- DEBUGGING: Isi dari variabel 'lists' ---", lists);
     // Cari list yang spesifik: Watching, Planning, dan Completed
     const watchingList = lists.find(
-      (list) => list.name === "Watching"
-    )?.entries;
+      (list) => list.name === "Watching" || list.name === "Current"
+    )?.entries; // Mencari Watching ATAU Current
     const planningList = lists.find(
       (list) => list.name === "Planning"
     )?.entries;
