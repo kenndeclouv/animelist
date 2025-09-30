@@ -210,8 +210,26 @@ const createAnimeGridCard = (
   textColor = normalizeColor(textColor);
   posterBg = normalizeColor(posterBg);
 
-  const posterWidth = cardWidth - 24;
-  const posterHeight = cardHeight - 60;
+  // Make poster size and text area flexible, filling the card
+  // Poster aspect ratio: 3:4 (typical anime poster)
+  // We'll use 80% of card width for poster, and keep 3:4 ratio, and center it horizontally
+  const posterAreaWidth = cardWidth * 0.8;
+  const posterAreaHeight = cardHeight * 0.60; // 60% of card height for poster
+  // Calculate poster size to fit 3:4 inside posterArea
+  let posterWidth = posterAreaWidth;
+  let posterHeight = posterWidth * 4 / 3;
+  if (posterHeight > posterAreaHeight) {
+    posterHeight = posterAreaHeight;
+    posterWidth = posterHeight * 3 / 4;
+  }
+  // Center poster horizontally
+  const posterX = x + (cardWidth - posterWidth) / 2;
+  const posterY = y + 10;
+
+  // Text area below poster
+  const textStartY = posterY + posterHeight + 18;
+  const textGap = 16;
+
   const title =
     entry.media.title.romaji ||
     entry.media.title.english ||
@@ -223,30 +241,18 @@ const createAnimeGridCard = (
   return `
     <g>
       <rect x="${x}" y="${y}" width="${cardWidth}" height="${cardHeight}" fill="${posterBg}" opacity="0.10" rx="12"/>
-      <image href="${base64Image}" x="${x + 12}" y="${
-    y + 10
-  }" width="${posterWidth}" height="${posterHeight}" rx="8" ry="8"/>
-      <text x="${x + cardWidth / 2}" y="${
-    y + posterHeight + 30
-  }" font-size="13" fill="${primaryColor}" font-weight="bold" text-anchor="middle" style="letter-spacing:0.2px;">${escapeXml(
-    title.length > 32 ? title.slice(0, 29) + "..." : title
-  )}</text>
-      <text x="${x + cardWidth / 2}" y="${
-    y + posterHeight + 48
-  }" font-size="12" fill="${textColor}" text-anchor="middle">${escapeXml(
-    entry.media.format || ""
-  )}</text>
-      <text x="${x + 18}" y="${
-    y + cardHeight - 12
-  }" font-size="11" fill="${accentColor}" font-weight="bold">${score}</text>
-      <text x="${x + cardWidth / 2}" y="${
-    y + cardHeight - 12
-  }" font-size="11" fill="${textColor}" text-anchor="middle">${progress}</text>
-      <text x="${x + cardWidth - 18}" y="${
-    y + cardHeight - 12
-  }" font-size="11" fill="${textColor}" text-anchor="end">${escapeXml(
-    status
-  )}</text>
+      <image href="${base64Image}" x="${posterX}" y="${posterY}" width="${posterWidth}" height="${posterHeight}" rx="8" ry="8"/>
+      <text x="${x + cardWidth / 2}" y="${textStartY}" font-size="13" fill="${primaryColor}" font-weight="bold" text-anchor="middle" style="letter-spacing:0.2px;">${escapeXml(
+        title.length > 32 ? title.slice(0, 29) + "..." : title
+      )}</text>
+      <text x="${x + cardWidth / 2}" y="${textStartY + textGap}" font-size="12" fill="${textColor}" text-anchor="middle">${escapeXml(
+        entry.media.format || ""
+      )}</text>
+      <text x="${x + 18}" y="${y + cardHeight - 12}" font-size="11" fill="${accentColor}" font-weight="bold">${score}</text>
+      <text x="${x + cardWidth / 2}" y="${y + cardHeight - 12}" font-size="11" fill="${textColor}" text-anchor="middle">${progress}</text>
+      <text x="${x + cardWidth - 18}" y="${y + cardHeight - 12}" font-size="11" fill="${textColor}" text-anchor="end">${escapeXml(
+        status
+      )}</text>
     </g>
   `;
 };
@@ -306,11 +312,17 @@ export const handler = async (event, context) => {
 
   // Layout type: "list" (default, row/table) or "grid"
   const layout = (query.layout || "list").toLowerCase();
-  // Force gridColumns to 2 for grid layout as per instruction
-  const gridColumns = 2;
+
+  // For grid layout, allow flexible columns based on width and card size
+  // If gridColumns is set in query, use it, else calculate based on width and card width
   const gridCardWidth = parseInt(query.gridCardWidth) || 140;
   const gridCardHeight = parseInt(query.gridCardHeight) || 210;
   const gridGap = 18;
+  let gridColumns = parseInt(query.gridColumns);
+  if (!gridColumns || gridColumns < 1) {
+    // Calculate how many columns fit in the given width
+    gridColumns = Math.max(1, Math.floor((width + gridGap) / (gridCardWidth + gridGap)));
+  }
 
   const headers = {
     "Content-Type": "image/svg+xml",
@@ -456,7 +468,7 @@ export const handler = async (event, context) => {
       } else {
         // Calculate number of rows needed
         const n = Math.min(entries.length, maxRows);
-        const cols = 2; // Force 2 columns for grid layout
+        const cols = gridColumns;
         const rows = Math.ceil(n / cols);
         let cardIndex = 0;
         for (let row = 0; row < rows; row++) {
@@ -494,7 +506,7 @@ export const handler = async (event, context) => {
       // Grid layout
       // Calculate grid width for all columns, adjust SVG width if needed
       const gridTotalWidth =
-        2 * gridCardWidth + (2 - 1) * gridGap; // Always 2 columns
+        gridColumns * gridCardWidth + (gridColumns - 1) * gridGap;
       const svgWidth = Math.max(width, gridTotalWidth);
 
       // Watching
