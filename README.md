@@ -1,177 +1,87 @@
-## AniList SVG Table API — `netlify/functions/api.js`
 
-Generate a customizable SVG table for an AniList user, showing Watching, Completed, and Planning lists with inlined poster images. The output is a cached SVG ideal for GitHub READMEs and personal sites.
 
-### Live Endpoint
+# 🎨 AniList SVG Stats Card
 
-- Base path (via Netlify redirects in `netlify.toml`): `/api`
-- Example: `/api?username=kenndeclouv`
-- The function also responds on `/api/index.js` due to the redirect rule.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Platform](https://img.shields.io/badge/Platform-Netlify-00C7B7?logo=netlify)](https://www.netlify.com)
+[![Status](https://img.shields.io/badge/Status-Active-brightgreen)](https://github.com/KennDeClouv/AniList-SVG-Table)
 
-### What it renders
+Generate a dynamic, themeable, and self-contained SVG card of your AniList stats, perfect for your GitHub profile README!
 
-- Sections: Watching, Completed, Planning
-- Each row: Poster, Title, Format, Score, Progress, Status
-- Posters from AniList CDN are embedded as base64 in the SVG
+<br>
+
+<img src="https://kennanimelist.netlify.app/api?username=kenndeclouv&maxRows=3&bgColor=%23282c34&primaryColor=%2361afef&accentColor=%23c678dd&textColor=%23abb2bf" />
 
 ---
 
-## Requirements
+## ✨ Main Features
 
-- Node.js 18+ (native `fetch`)
-- Netlify account and Netlify CLI (for local dev and deploy)
-
-Install dependencies:
-
-```bash
-npm install
-```
+- **🎨 Highly Customizable:** Change colors, size, title, and row count directly via the URL.
+- **🖼️ Poster Images Inlined:** All poster images are embedded as Base64, making the SVG _self-contained_. No more proxy blocking (e.g., GitHub Camo).
+- **🚀 Fast & Efficient:** Runs on Netlify Edge Functions with smart caching for maximum performance.
+- **📊 Informative Display:** Shows your **Watching**, **Completed**, and **Planning** lists in a clear, easy-to-read table format.
+- **✨ Modern Design:** Clean and professional look, ready to enhance your profile.
 
 ---
 
-## Local Development
+## 🚀 Live Demo & Usage Example
 
-Run with Netlify Dev:
+Use the URL `https://kennanimelist.netlify.app/api` and add parameters as needed.
 
-```bash
-npx netlify-cli dev
-```
-
-Open in your browser:
-
-```
-http://localhost:8888/api?username=kenndeclouv
-```
-
-Notes:
-
-- Redirects in `netlify.toml` map `/api/*` to `/.netlify/functions/api/:splat`.
-- You can also call: `http://localhost:8888/.netlify/functions/api?username=...`.
+|                                                                                              Preview                                                                                               | Markdown Code to Use                                                                                                                                      |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|                                       **Default Theme**<br><img src="https://kennanimelist.netlify.app/api?username=kenndeclouv&maxRows=2" width="450px" />                                        | `![AniList](https://kennanimelist.netlify.app/api?username=kenndeclouv&maxRows=2)`                                                                        |
+|    **Dracula Theme**<br><img src="https://kennanimelist.netlify.app/api?username=kenndeclouv&maxRows=2&bgColor=282a36&primaryColor=ff79c6&accentColor=bd93f9&textColor=f8f8f2" width="450px" />    | `![AniList](https://kennanimelist.netlify.app/api?username=kenndeclouv&maxRows=2&bgColor=282a36&primaryColor=ff79c6&accentColor=bd93f9&textColor=f8f8f2)` |
+| **Compact Light Theme**<br><img src="https://kennanimelist.netlify.app/api?username=kenndeclouv&maxRows=1&bgColor=f4f4f4&primaryColor=2e4058&accentColor=49ACD2&textColor=333333" width="450px" /> | `![AniList](https://kennanimelist.netlify.app/api?username=kenndeclouv&maxRows=1&bgColor=f4f4f4&primaryColor=2e4058&accentColor=49ACD2&textColor=333333)` |
 
 ---
 
-## Deploy
+## ⚙️ Customization Parameters
 
-Deploy to Netlify from the repo root:
+All customization is done via _query parameters_. Colors use hex values (without `#`).
 
-```bash
-npx netlify-cli deploy --prod
-```
-
-Ensure `netlify.toml` contains:
-
-```toml
-[build]
-  functions = "netlify/functions"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
-  status = 200
-```
-
----
-
-## Usage and Query Parameters
-
-Send a GET request to `/api` with any of the parameters below. Colors accept hex values (URL-encode `#` as `%23`). Numeric values are pixels.
-
-- `username` (string): AniList username. Default: `kenndeclouv`
-- `title` (string): Custom title. Default: `<username>'s AniList`
-- `bgColor` (string): Background color. Default: `#23272e`
-- `primaryColor` (string): Main accent color. Default: `#49ACD2`
-- `accentColor` (string): Section accent bar color. Default: `#49ACD2`
-- `sectionBg` (string): Section header background. Default: `#23272e`
-- `posterBg` (string): Row accent background. Default: `#49ACD2`
-- `textColor` (string): Text color. Default: `#abb2bf`
-- `width` (number): SVG width. Default: `560`
-- `rowHeight` (number): Row height. Default: `56`
-- `headerHeight` (number): Section header height. Default: `38`
-- `headerFontSize` (number): Section header font size. Default: `18`
-- `titleFontSize` (number): Main title font size. Default: `28`
-- `titleMargin` (number): Top margin for title. Default: `32`
-- `sectionGap` (number): Gap between sections. Default: `18`
-- `maxRows` (number): Max rows per section. Default: `5`
-
-### Examples
-
-Basic:
-
-```
-/api?username=kenndeclouv
-```
-
-Limit rows and customize colors:
-
-```
-/api?username=kenndeclouv&maxRows=3&primaryColor=%2349ACD2&bgColor=%2323272e
-```
-
-Change sizes:
-
-```
-/api?username=kenndeclouv&titleFontSize=30&headerFontSize=16&rowHeight=60&width=640
-```
+| Parameter        | Description                        | Default                |
+| :--------------- | :--------------------------------- | :--------------------- |
+| `username`       | AniList username.                  | `kenndeclouv`          |
+| `title`          | Custom card title.                 | `<username>'s AniList` |
+| `maxRows`        | Max anime per category.            | `5`                    |
+| `width`          | Total SVG card width (in px).      | `560`                  |
+| `bgColor`        | Main background color.             | `23272e`               |
+| `primaryColor`   | Primary accent color (title, etc). | `49ACD2`               |
+| `accentColor`    | Left bar accent color.             | `49ACD2`               |
+| `textColor`      | Secondary text color.              | `abb2bf`               |
+| `sectionBg`      | Category header background.        | `23272e`               |
+| `posterBg`       | Row background accent color.       | `49ACD2`               |
+| `rowHeight`      | Anime row height (in px).          | `56`                   |
+| `headerHeight`   | Category header height (in px).    | `38`                   |
+| `headerFontSize` | Category header font size.         | `18`                   |
+| `titleFontSize`  | Main title font size.              | `28`                   |
+| `titleMargin`    | Top margin for main title.         | `32`                   |
+| `sectionGap`     | Gap between categories (in px).    | `18`                   |
 
 ---
 
-## Embedding in GitHub README
+## 🛠️ Local Development
 
-Use a Markdown image linking to your deployed URL:
+**Requirements:**
 
-```markdown
-![AniList](https://<your-site>.netlify.app/api?username=kenndeclouv&maxRows=5)
-```
+- Node.js v18+
+- Netlify CLI
 
-Tip:
+1.  **Install dependencies:**
 
-- Caching is enabled for 2 hours. If updates are delayed, add a cache buster like `&t=1699999999`.
+    ```bash
+    npm install
+    ```
 
----
-
-## Responses
-
-- `200 OK` with `Content-Type: image/svg+xml`: SVG table rendered successfully
-- `404 Not Found`: Username not found (styled SVG error card)
-- `500 Internal Server Error`: Unexpected error (styled SVG error card)
-
-Headers:
-
-- `Cache-Control: public, max-age=7200, must-revalidate`
+2.  **Run local server:**
+    ```bash
+    netlify dev
+    ```
+    The server will run at `http://localhost:8888`. You can access the endpoint at `http://localhost:8888/api?username=...`
 
 ---
 
-## Implementation Notes
+## 🚀 Deploy
 
-- Source: `netlify/functions/api.js`
-- Uses `anilist-node` to fetch user lists.
-- Renders up to `maxRows` items for each of Watching, Completed, Planning.
-- Posters are fetched from `https://img.anili.st/media/<mediaId>` and inlined as base64.
-- If a poster fails to load, the row still renders without it.
-
----
-
-## Troubleshooting
-
-- Blank image in README
-
-  - Verify the endpoint URL loads directly in a browser
-  - Ensure the function is deployed and publicly accessible
-  - Add `&t=<timestamp>` to bypass caches
-
-- User not found
-
-  - Confirm the `username` exists on AniList
-
-- Missing posters
-
-  - Some titles may lack accessible CDN images; rows still render without posters
-
-- Local dev routing
-  - If `/api` does not route, use `/.netlify/functions/api` directly
-
----
-
-## License
-
-MIT
+This project is configured for automatic deployment on Netlify. Just push to the `main` branch of your GitHub repo. Make sure your `netlify.toml` is correct.
