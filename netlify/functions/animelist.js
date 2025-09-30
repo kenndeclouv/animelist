@@ -6,6 +6,8 @@
  * This file implements a Netlify serverless function that generates a customizable SVG table
  * for an AniList user, showing their Watching, Completed, and Planning anime lists with inlined poster images.
  * The SVG is suitable for embedding in GitHub READMEs and personal sites.
+ *
+ * Now supports layout type: "list" (default, row/table) and "grid".
  */
 
 import Anilist from "anilist-node";
@@ -72,7 +74,7 @@ const getBase64Image = async (url) => {
   try {
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "GitHub-AniList-SVG-Widget/1.0",
+        "User-Agent": "github-kenndeclouv-animelist-widget/1.0",
       },
     });
     const buffer = await response.arrayBuffer();
@@ -178,6 +180,78 @@ const createAnimeTableRow = (
 };
 
 /**
+ * Creates an SVG grid card for an anime entry.
+ * @param {object} entry - The anime list entry object from AniList.
+ * @param {string} base64Image - The base64-encoded poster image data URI.
+ * @param {number} x - The x-coordinate for the card.
+ * @param {number} y - The y-coordinate for the card.
+ * @param {number} cardWidth - The width of the card.
+ * @param {number} cardHeight - The height of the card.
+ * @param {string} primaryColor - The primary accent color.
+ * @param {string} accentColor - The accent bar color.
+ * @param {string} textColor - The text color.
+ * @param {string} posterBg - The background color for the poster area.
+ * @returns {string} SVG markup for the grid card.
+ */
+const createAnimeGridCard = (
+  entry,
+  base64Image,
+  x,
+  y,
+  cardWidth,
+  cardHeight,
+  primaryColor,
+  accentColor,
+  textColor,
+  posterBg
+) => {
+  primaryColor = normalizeColor(primaryColor);
+  accentColor = normalizeColor(accentColor);
+  textColor = normalizeColor(textColor);
+  posterBg = normalizeColor(posterBg);
+
+  const posterWidth = cardWidth - 24;
+  const posterHeight = cardHeight - 60;
+  const title =
+    entry.media.title.romaji ||
+    entry.media.title.english ||
+    entry.media.title.native;
+  const score = entry.score > 0 ? `⭐ ${entry.score}` : "";
+  const progress = entry.progress > 0 ? `Ep ${entry.progress}` : "";
+  const status = entry.status || "";
+
+  return `
+    <g>
+      <rect x="${x}" y="${y}" width="${cardWidth}" height="${cardHeight}" fill="${posterBg}" opacity="0.10" rx="12"/>
+      <image href="${base64Image}" x="${x + 12}" y="${
+    y + 10
+  }" width="${posterWidth}" height="${posterHeight}" rx="8" ry="8"/>
+      <text x="${x + cardWidth / 2}" y="${
+    y + posterHeight + 30
+  }" font-size="13" fill="${primaryColor}" font-weight="bold" text-anchor="middle" style="letter-spacing:0.2px;">${escapeXml(
+    title.length > 32 ? title.slice(0, 29) + "..." : title
+  )}</text>
+      <text x="${x + cardWidth / 2}" y="${
+    y + posterHeight + 48
+  }" font-size="12" fill="${textColor}" text-anchor="middle">${escapeXml(
+    entry.media.format || ""
+  )}</text>
+      <text x="${x + 18}" y="${
+    y + cardHeight - 12
+  }" font-size="11" fill="${accentColor}" font-weight="bold">${score}</text>
+      <text x="${x + cardWidth / 2}" y="${
+    y + cardHeight - 12
+  }" font-size="11" fill="${textColor}" text-anchor="middle">${progress}</text>
+      <text x="${x + cardWidth - 18}" y="${
+    y + cardHeight - 12
+  }" font-size="11" fill="${textColor}" text-anchor="end">${escapeXml(
+    status
+  )}</text>
+    </g>
+  `;
+};
+
+/**
  * Netlify handler function for the AniList SVG Table API.
  *
  * Query Parameters:
@@ -197,6 +271,10 @@ const createAnimeTableRow = (
  * - titleMargin (number): Top margin for title. Default: 32
  * - maxRows (number): Maximum rows per section. Default: 5
  * - sectionGap (number): Gap between sections. Default: 18
+ * - layout (string): "list" (default, row/table) or "grid"
+ * - gridColumns (number): Number of columns in grid layout (default: 3)
+ * - gridCardHeight (number): Card height in grid layout (default: 210)
+ * - gridCardWidth (number): Card width in grid layout (default: 140)
  *
  * @param {object} event - Netlify event object, containing queryStringParameters.
  * @param {object} context - Netlify context object.
@@ -214,7 +292,9 @@ export const handler = async (event, context) => {
   const textColor = normalizeColor(query.textColor || "#abb2bf");
   const titleText =
     query.title ||
-    (query.username ? `${query.username}'s AniList` : "kenndeclouv's AniList");
+    (query.username
+      ? `${query.username}'s Animelist`
+      : "kenndeclouv's Animelist");
   const maxRows = parseInt(query.maxRows) || 5;
   const width = parseInt(query.width) || 560;
   const rowHeight = parseInt(query.rowHeight) || 56;
@@ -223,6 +303,13 @@ export const handler = async (event, context) => {
   const sectionGap = parseInt(query.sectionGap) || 18;
   const titleFontSize = parseInt(query.titleFontSize) || 28;
   const titleMargin = parseInt(query.titleMargin) || 32;
+
+  // Layout type: "list" (default, row/table) or "grid"
+  const layout = (query.layout || "list").toLowerCase();
+  const gridColumns = parseInt(query.gridColumns) || 3;
+  const gridCardWidth = parseInt(query.gridCardWidth) || 140;
+  const gridCardHeight = parseInt(query.gridCardHeight) || 210;
+  const gridGap = 18;
 
   const headers = {
     "Content-Type": "image/svg+xml",
@@ -301,13 +388,13 @@ export const handler = async (event, context) => {
     `;
 
     /**
-     * Renders a section of the SVG table for a given list category.
+     * Renders a section of the SVG table for a given list category (list/row layout).
      * @param {string} title - The section title.
      * @param {Array<object>} entries - The anime entries for the section.
      * @param {number} yStart - The starting y-coordinate for the section.
      * @returns {{section: string, height: number}} SVG markup and height for the section.
      */
-    const renderSection = (title, entries, yStart) => {
+    const renderSectionList = (title, entries, yStart) => {
       let section = "";
       let currentY = yStart;
       section += `<rect x="0" y="${currentY}" width="${width}" height="${headerHeight}" fill="${sectionBg}" rx="8"/>`;
@@ -342,48 +429,152 @@ export const handler = async (event, context) => {
       return { section, height: currentY - yStart };
     };
 
+    /**
+     * Renders a section of the SVG as a grid for a given list category (grid layout).
+     * @param {string} title - The section title.
+     * @param {Array<object>} entries - The anime entries for the section.
+     * @param {number} yStart - The starting y-coordinate for the section.
+     * @returns {{section: string, height: number}} SVG markup and height for the section.
+     */
+    const renderSectionGrid = (title, entries, yStart) => {
+      let section = "";
+      let currentY = yStart;
+      section += `<rect x="0" y="${currentY}" width="${width}" height="${headerHeight}" fill="${sectionBg}" rx="8"/>`;
+      section += `<text x="20" y="${
+        currentY + headerHeight / 2 + headerFontSize / 2 - 2
+      }" font-size="${headerFontSize}" fill="${primaryColor}" font-weight="bold">${escapeXml(
+        title
+      )}</text>`;
+      currentY += headerHeight;
+
+      if (entries.length === 0) {
+        section += `<text x="50%" y="${
+          currentY + gridCardHeight / 2 + 5
+        }" text-anchor="middle" font-size="14" fill="${textColor}">No anime in this list.</text>`;
+        currentY += gridCardHeight;
+      } else {
+        // Calculate number of rows needed
+        const n = Math.min(entries.length, maxRows);
+        const cols = gridColumns;
+        const rows = Math.ceil(n / cols);
+        let cardIndex = 0;
+        for (let row = 0; row < rows; row++) {
+          for (let col = 0; col < cols; col++) {
+            if (cardIndex >= n) break;
+            const entry = entries[cardIndex];
+            const base64Image = imageMap[entry.media.id] || "";
+            const x = col * (gridCardWidth + gridGap);
+            const y = currentY + row * (gridCardHeight + gridGap);
+            section += createAnimeGridCard(
+              entry,
+              base64Image,
+              x,
+              y,
+              gridCardWidth,
+              gridCardHeight,
+              primaryColor,
+              accentColor,
+              textColor,
+              posterBg
+            );
+            cardIndex++;
+          }
+        }
+        currentY += rows * gridCardHeight + (rows - 1) * gridGap;
+      }
+      return { section, height: currentY - yStart };
+    };
+
     // Render each section
     let y = titleMargin + titleFontSize + 12;
     let svgSections = "";
-    // Watching
-    const watchingResult = renderSection("Watching", watchingList, y);
-    svgSections += watchingResult.section;
-    y += watchingResult.height + sectionGap;
 
-    // Completed
-    const completedResult = renderSection("Completed", completedList, y);
-    svgSections += completedResult.section;
-    y += completedResult.height + sectionGap;
+    if (layout === "grid") {
+      // Grid layout
+      // Calculate grid width for all columns, adjust SVG width if needed
+      const gridTotalWidth =
+        gridColumns * gridCardWidth + (gridColumns - 1) * gridGap;
+      const svgWidth = Math.max(width, gridTotalWidth);
 
-    // Planning
-    const planningResult = renderSection("Planning", planningList, y);
-    svgSections += planningResult.section;
-    y += planningResult.height;
+      // Watching
+      const watchingResult = renderSectionGrid("Watching", watchingList, y);
+      svgSections += watchingResult.section;
+      y += watchingResult.height + sectionGap;
 
-    // SVG height calculation
-    const svgHeight = y + 24;
+      // Completed
+      const completedResult = renderSectionGrid("Completed", completedList, y);
+      svgSections += completedResult.section;
+      y += completedResult.height + sectionGap;
 
-    // SVG
-    // Remove shadow (no filter, no shadow, no drop-shadow, no filter attribute)
-    const svg = `
-       <svg width="${width}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${svgHeight}" style="font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', sans-serif;">
-            <rect width="100%" height="100%" fill="${bgColor}" rx="18" ry="18" />
-        <text x="24" y="${
-          titleMargin + titleFontSize
-        }" font-size="${titleFontSize}" fill="${primaryColor}" font-weight="bold" style="letter-spacing:1px;">${escapeXml(
-      titleText
-    )}</text>
-        ${tableHeader(titleMargin + titleFontSize + 2)}
-        ${svgSections}
-       </svg>
-      `;
+      // Planning
+      const planningResult = renderSectionGrid("Planning", planningList, y);
+      svgSections += planningResult.section;
+      y += planningResult.height;
 
-    // Return Response object for successfully generated SVG
-    return {
-      statusCode: 200,
-      headers,
-      body: svg,
-    };
+      // SVG height calculation
+      const svgHeight = y + 24;
+
+      // SVG
+      const svg = `
+         <svg width="${svgWidth}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgWidth} ${svgHeight}" style="font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', sans-serif;">
+              <rect width="100%" height="100%" fill="${bgColor}" rx="18" ry="18" />
+          <text x="24" y="${
+            titleMargin + titleFontSize
+          }" font-size="${titleFontSize}" fill="${primaryColor}" font-weight="bold" style="letter-spacing:1px;">${escapeXml(
+        titleText
+      )}</text>
+          ${svgSections}
+         </svg>
+        `;
+
+      // Return Response object for successfully generated SVG
+      return {
+        statusCode: 200,
+        headers,
+        body: svg,
+      };
+    } else {
+      // Default: list/row/table layout
+      // Watching
+      const watchingResult = renderSectionList("Watching", watchingList, y);
+      svgSections += watchingResult.section;
+      y += watchingResult.height + sectionGap;
+
+      // Completed
+      const completedResult = renderSectionList("Completed", completedList, y);
+      svgSections += completedResult.section;
+      y += completedResult.height + sectionGap;
+
+      // Planning
+      const planningResult = renderSectionList("Planning", planningList, y);
+      svgSections += planningResult.section;
+      y += planningResult.height;
+
+      // SVG height calculation
+      const svgHeight = y + 24;
+
+      // SVG
+      // Remove shadow (no filter, no shadow, no drop-shadow, no filter attribute)
+      const svg = `
+         <svg width="${width}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${svgHeight}" style="font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', sans-serif;">
+              <rect width="100%" height="100%" fill="${bgColor}" rx="18" ry="18" />
+          <text x="24" y="${
+            titleMargin + titleFontSize
+          }" font-size="${titleFontSize}" fill="${primaryColor}" font-weight="bold" style="letter-spacing:1px;">${escapeXml(
+        titleText
+      )}</text>
+          ${tableHeader(titleMargin + titleFontSize + 2)}
+          ${svgSections}
+         </svg>
+        `;
+
+      // Return Response object for successfully generated SVG
+      return {
+        statusCode: 200,
+        headers,
+        body: svg,
+      };
+    }
   } catch (error) {
     console.error(error);
     // Return Response object for unexpected errors

@@ -9,7 +9,7 @@
 
 Generate a dynamic, themeable, and self-contained SVG card of your AniList stats, perfect for your GitHub profile README!
 
-<img src="https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=3&bgColor=%23282c34&primaryColor=%2361afef&accentColor=%23c678dd&textColor=%23abb2bf" />
+<img src="https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=3" />
 
 </div>
 
@@ -51,6 +51,7 @@ All customization is done via _query parameters_. Colors use hex values (without
 | Parameter        | Description                        | Default                |
 | :--------------- | :--------------------------------- | :--------------------- |
 | `username`       | AniList username.                  | `kenndeclouv`          |
+| `layout`         | layout type (list/grid)            | `list`                 |
 | `title`          | Custom card title.                 | `<username>'s AniList` |
 | `maxRows`        | Max anime per category.            | `5`                    |
 | `width`          | Total SVG card width (in px).      | `560`                  |
