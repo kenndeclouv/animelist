@@ -78,7 +78,7 @@ export default async function handler(req, res) {
   res.setHeader("Content-Type", "image/svg+xml");
   res.setHeader(
     "Cache-Control",
-    "public, s-maxage=86400, stale-while-revalidate=43200"
+    "public, max-age=7200, must-revalidate" // Cache selama 2 jam
   );
 
   try {
