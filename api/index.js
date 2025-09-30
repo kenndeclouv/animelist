@@ -1,16 +1,39 @@
 import Anilist from "anilist-node";
 const anilist = new Anilist();
 
+// Helper function untuk membuat SVG error yang informatif
+const createErrorCard = (message) => {
+  return `
+    <svg width="330" height="150" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 150" style="font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', sans-serif;">
+      <rect width="100%" height="100%" fill="#282c34" rx="10" ry="10" />
+      <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" font-size="16" fill="#e06c75" font-weight="bold">Oops! An Error Occurred</text>
+      <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" font-size="12" fill="#abb2bf">${message}</text>
+    </svg>
+  `;
+};
+
 export default async function handler(req, res) {
+  // Selalu set header SVG di awal untuk konsistensi
+  res.setHeader("Content-Type", "image/svg+xml");
+  res.setHeader(
+    "Cache-Control",
+    "public, s-maxage=7200, stale-while-revalidate=3600"
+  );
+
   try {
-    // Kamu bisa ganti username ini dengan query parameter nanti, tapi untuk sekarang kita pakai ini
-    const username = req.query.username || "kenndeclouv";
-    const user = await anilist.user.all(username);
+    const targetUsername = req.query.username || "kenndeclouv";
+    const user = await anilist.user.all(targetUsername);
+
+    // Kalau user null (tidak ditemukan), langsung kirim error
+    if (!user) {
+      return res
+        .status(404)
+        .send(createErrorCard(`User '${targetUsername}' Not Found`));
+    }
+
     const userId = user.id;
+    const activities = await anilist.user.getRecentActivity(userId, 1, 15);
 
-    const activities = await anilist.user.getRecentActivity(userId, 1, 15); // Ambil 15 aktivitas terakhir buat jaga-jaga
-
-    // 1. FILTER DATA: Ambil 3 aktivitas nonton anime terbaru
     const watchingActivities = activities
       .filter(
         (act) =>
@@ -21,62 +44,35 @@ export default async function handler(req, res) {
       )
       .slice(0, 3);
 
-    // Kalau nggak ada aktivitas nonton, kirim pesan error
     if (watchingActivities.length === 0) {
-      return res.status(200).send("No recent anime watching activity found.");
+      return res.status(200).send(createErrorCard("No recent activity found."));
     }
 
-    // 2. SIAPKAN KANVAS SVG: Tentukan ukuran dan style dasar
-    const cardWidth = 330; // Lebar card
-    const cardHeight = 150; // Tinggi card
-    const posterWidth = 80; // Lebar poster
-    const posterHeight = 112; // Tinggi poster
+    const cardWidth = 330;
+    const cardHeight = 150;
+    const posterWidth = 80;
+    const posterHeight = 112;
 
-    // 3. RAKIT POSTER: Loop data dan buat elemen <image> untuk tiap poster
     const postersSVG = watchingActivities
       .map((activity, index) => {
-        // Kalkulasi posisi X untuk tiap poster biar berjajar rapi
         const xOffset = 20 + index * (posterWidth + 15);
         const posterUrl = activity.media.coverImage.large;
-
-        return `
-        <image 
-          href="${posterUrl}" 
-          x="${xOffset}" 
-          y="25" 
-          width="${posterWidth}" 
-          height="${posterHeight}"
-          rx="8" ry="8"
-          style="border-radius: 8px;"
-        />
-      `;
+        return `<image href="${posterUrl}" x="${xOffset}" y="25" width="${posterWidth}" height="${posterHeight}" rx="8" ry="8" />`;
       })
-      .join(""); // Gabungkan semua string <image> jadi satu
+      .join("");
 
-    // 4. GABUNGKAN SEMUA JADI SATU SVG UTUH
     const svg = `
-      <svg 
-        width="${cardWidth}" 
-        height="${cardHeight}" 
-        xmlns="http://www.w3.org/2000/svg" 
-        viewBox="0 0 ${cardWidth} ${cardHeight}"
-        style="font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', sans-serif;"
-      >
+      <svg width="${cardWidth}" height="${cardHeight}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${cardWidth} ${cardHeight}" style="font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', sans-serif;">
         <rect width="100%" height="100%" fill="#282c34" rx="10" ry="10" />
         <text x="20" y="16" font-size="14" fill="#abb2bf" font-weight="bold">Recently Watched on AniList</text>
         ${postersSVG}
       </svg>
     `;
 
-    // 5. KIRIM SEBAGAI GAMBAR: Set header dan kirim SVG-nya
-    res.setHeader(
-      "Cache-Control",
-      "public, s-maxage=7200, stale-while-revalidate=3600"
-    );
-    res.setHeader("Content-Type", "image/svg+xml");
     res.status(200).send(svg);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Oops! Something went wrong." });
+    // INI BAGIAN PENTINGNYA: Kirim SVG error jika ada masalah tak terduga
+    res.status(500).send(createErrorCard("Could not fetch data."));
   }
 }
