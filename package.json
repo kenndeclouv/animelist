@@ -16,5 +16,8 @@
     "url": "https://github.com/kenndeclouv/animelist/issues"
   },
   "homepage": "https://github.com/kenndeclouv/animelist#readme",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "anilist-node": "^1.14.1"
+  }
 }
