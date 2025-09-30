@@ -18,6 +18,20 @@ const escapeXml = (unsafe) => {
     : "";
 };
 
+// New function to fetch and encode image as base64
+const getBase64Image = async (url) => {
+  try {
+    // Use global fetch (Node 18+ or polyfill)
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString("base64");
+    return `data:image/jpeg;base64,${base64}`;
+  } catch (error) {
+    console.error("Failed to fetch and encode image:", error);
+    return ""; // Return empty string on error
+  }
+};
+
 // Error card with customizable colors
 const createErrorCard = (
   message,
@@ -35,9 +49,10 @@ const createErrorCard = (
   `;
 };
 
-// Table row for anime entry
+// Table row for anime entry, now takes base64Image as argument
 const createAnimeTableRow = (
   entry,
+  base64Image,
   y,
   rowHeight,
   primaryColor,
@@ -58,7 +73,7 @@ const createAnimeTableRow = (
     <g>
       <rect x="0" y="${y}" width="100%" height="${rowHeight}" fill="${posterBg}" opacity="0.12"/>
       <rect x="0" y="${y}" width="8" height="${rowHeight}" fill="${accentColor}" rx="4"/>
-      <image href="https://img.anili.st/media/${entry.media.id}" x="16" y="${
+      <image href="${base64Image}" x="16" y="${
     y + 6
   }" width="${posterWidth}" height="${posterHeight}" rx="8" ry="8"/>
       <text x="76" y="${
@@ -84,60 +99,13 @@ const createAnimeTableRow = (
   `;
 };
 
-// Table section for a list (Watching, Completed, Planning)
-const createAnimeTableSection = (title, entries, yStart, options) => {
-  const {
-    primaryColor,
-    accentColor,
-    textColor,
-    sectionBg,
-    posterBg,
-    rowHeight,
-    width,
-    headerFontSize,
-    headerHeight,
-    maxRows,
-  } = options;
-  let y = yStart;
-  let section = `
-    <rect x="0" y="${y}" width="${width}" height="${headerHeight}" fill="${sectionBg}" rx="8"/>
-    <text x="20" y="${
-      y + headerHeight / 2 + headerFontSize / 2 - 2
-    }" font-size="${headerFontSize}" fill="${primaryColor}" font-weight="bold">${escapeXml(
-    title
-  )}</text>
-  `;
-  y += headerHeight;
-
-  if (entries.length === 0) {
-    section += `<text x="50%" y="${
-      y + rowHeight / 2 + 5
-    }" text-anchor="middle" font-size="14" fill="${textColor}">No anime in this list.</text>`;
-    y += rowHeight;
-  } else {
-    entries.slice(0, maxRows).forEach((entry) => {
-      section += createAnimeTableRow(
-        entry,
-        y,
-        rowHeight,
-        primaryColor,
-        accentColor,
-        textColor,
-        posterBg
-      );
-      y += rowHeight;
-    });
-  }
-  return { section, height: y - yStart };
-};
-
 export default async function handler(req, res) {
   // Customization via query
   const bgColor = req.query.bgColor || "#23272e";
-  const primaryColor = req.query.primaryColor || "#5fd3bc";
-  const accentColor = req.query.accentColor || "#5fd3bc";
+  const primaryColor = req.query.primaryColor || "#49ACD2";
+  const accentColor = req.query.accentColor || "#49ACD2";
   const sectionBg = req.query.sectionBg || "#23272e";
-  const posterBg = req.query.posterBg || "#5fd3bc";
+  const posterBg = req.query.posterBg || "#49ACD2";
   const textColor = req.query.textColor || "#abb2bf";
   const titleText =
     req.query.title ||
@@ -182,6 +150,23 @@ export default async function handler(req, res) {
     const planningList =
       lists.find((list) => list.name === "Planning")?.entries || [];
 
+    // Fetch and encode all poster images for all entries in all lists
+    const allEntries = [
+      ...watchingList.slice(0, maxRows),
+      ...completedList.slice(0, maxRows),
+      ...planningList.slice(0, maxRows),
+    ];
+    const imagePromises = allEntries.map((entry) => {
+      const imageUrl = `https://img.anili.st/media/${entry.media.id}`;
+      return getBase64Image(imageUrl);
+    });
+    const base64Images = await Promise.all(imagePromises);
+    // Map media.id to base64 image
+    const imageMap = {};
+    allEntries.forEach((entry, idx) => {
+      imageMap[entry.media.id] = base64Images[idx];
+    });
+
     // Table columns: Title | Format | Score | Progress | Status
     // Table header
     const tableHeader = (y) => `
@@ -202,56 +187,59 @@ export default async function handler(req, res) {
       </g>
     `;
 
+    // Helper to render a section with inlined images
+    const renderSection = (title, entries, yStart) => {
+      let section = "";
+      let currentY = yStart;
+      section += `<rect x="0" y="${currentY}" width="${width}" height="${headerHeight}" fill="${sectionBg}" rx="8"/>`;
+      section += `<text x="20" y="${
+        currentY + headerHeight / 2 + headerFontSize / 2 - 2
+      }" font-size="${headerFontSize}" fill="${primaryColor}" font-weight="bold">${escapeXml(
+        title
+      )}</text>`;
+      currentY += headerHeight;
+
+      if (entries.length === 0) {
+        section += `<text x="50%" y="${
+          currentY + rowHeight / 2 + 5
+        }" text-anchor="middle" font-size="14" fill="${textColor}">No anime in this list.</text>`;
+        currentY += rowHeight;
+      } else {
+        entries.slice(0, maxRows).forEach((entry) => {
+          const base64Image = imageMap[entry.media.id] || "";
+          section += createAnimeTableRow(
+            entry,
+            base64Image,
+            currentY,
+            rowHeight,
+            primaryColor,
+            accentColor,
+            textColor,
+            posterBg
+          );
+          currentY += rowHeight;
+        });
+      }
+      return { section, height: currentY - yStart };
+    };
+
     // Render each section
     let y = titleMargin + titleFontSize + 12;
     let svgSections = "";
-    const sectionOptions = {
-      primaryColor,
-      accentColor,
-      textColor,
-      sectionBg,
-      posterBg,
-      rowHeight,
-      width,
-      headerFontSize,
-      headerHeight,
-      maxRows,
-    };
-
     // Watching
-    svgSections += createAnimeTableSection(
-      "Watching",
-      watchingList,
-      y,
-      sectionOptions
-    ).section;
-    y +=
-      headerHeight +
-      Math.max(1, Math.min(watchingList.length, maxRows)) * rowHeight +
-      sectionGap;
+    const watchingResult = renderSection("Watching", watchingList, y);
+    svgSections += watchingResult.section;
+    y += watchingResult.height + sectionGap;
 
     // Completed
-    svgSections += createAnimeTableSection(
-      "Completed",
-      completedList,
-      y,
-      sectionOptions
-    ).section;
-    y +=
-      headerHeight +
-      Math.max(1, Math.min(completedList.length, maxRows)) * rowHeight +
-      sectionGap;
+    const completedResult = renderSection("Completed", completedList, y);
+    svgSections += completedResult.section;
+    y += completedResult.height + sectionGap;
 
     // Planning
-    svgSections += createAnimeTableSection(
-      "Planning",
-      planningList,
-      y,
-      sectionOptions
-    ).section;
-    y +=
-      headerHeight +
-      Math.max(1, Math.min(planningList.length, maxRows)) * rowHeight;
+    const planningResult = renderSection("Planning", planningList, y);
+    svgSections += planningResult.section;
+    y += planningResult.height;
 
     // SVG height calculation
     const svgHeight = y + 24;
@@ -299,10 +287,10 @@ Query Parameters:
   - username:      (string) AniList username (default: "kenndeclouv")
   - title:         (string) Custom title for the SVG (default: "<username>'s AniList")
   - bgColor:       (string) Background color (default: "#23272e")
-  - primaryColor:  (string) Main accent color (default: "#5fd3bc")
-  - accentColor:   (string) Color for section accent bars (default: "#5fd3bc")
+  - primaryColor:  (string) Main accent color (default: "#49ACD2")
+  - accentColor:   (string) Color for section accent bars (default: "#49ACD2")
   - sectionBg:     (string) Section header background color (default: "#23272e")
-  - posterBg:      (string) Row background accent color (default: "#5fd3bc")
+  - posterBg:      (string) Row background accent color (default: "#49ACD2")
   - textColor:     (string) Text color (default: "#abb2bf")
   - width:         (number) SVG width in px (default: 560)
   - rowHeight:     (number) Height of each anime row (default: 56)
@@ -321,9 +309,8 @@ Features:
   - If user not found, returns a styled SVG error card.
 
 Example Usage:
-  /api/index.js?username=kenndeclouv&primaryColor=%235fd3bc&bgColor=%2323272e&maxRows=3
+  /api/index.js?username=kenndeclouv&primaryColor=%2349ACD2&bgColor=%2323272e&maxRows=3
 
 Customization:
   All colors and sizes can be changed via query parameters for full UI/UX flexibility.
-
 */
