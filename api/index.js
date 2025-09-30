@@ -74,7 +74,7 @@ export default async function handler(req, res) {
     // Cari list yang spesifik: Watching, Planning, dan Completed
     const watchingList = lists.find(
       (list) => list.name === "Watching" || list.name === "Current"
-    )?.entries; // Mencari Watching ATAU Current
+    )?.entries;
     const planningList = lists.find(
       (list) => list.name === "Planning"
     )?.entries;
@@ -82,6 +82,18 @@ export default async function handler(req, res) {
       (list) => list.name === "Completed"
     )?.entries;
 
+    // --- TAMBAHKAN KODE DEBUGGING INI ---
+    if (watchingList && watchingList.length > 0) {
+      console.log(
+        "--- DEBUGGING: Struktur satu entri dari 'Watching' list ---"
+      );
+      // Kita pakai JSON.stringify biar semua isi objeknya keliatan jelas
+      console.log(JSON.stringify(watchingList[0], null, 2));
+    } else {
+      console.log(
+        "--- DEBUGGING: 'Watching' list kosong atau tidak ditemukan. ---"
+      );
+    }
     // --- DESAIN SVG BARU YANG LEBIH BESAR ---
     const cardWidth = 450;
     const cardHeight = 480;
