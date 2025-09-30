@@ -1,16 +1,17 @@
 
+<div align="center">
 
 # 🎨 AniList SVG Stats Card
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Platform](https://img.shields.io/badge/Platform-Netlify-00C7B7?logo=netlify)](https://www.netlify.com)
-[![Status](https://img.shields.io/badge/Status-Active-brightgreen)](https://github.com/KennDeClouv/AniList-SVG-Table)
+[![Status](https://img.shields.io/badge/Status-Active-brightgreen)](https://github.com/kenndeclouv/animelist)
 
 Generate a dynamic, themeable, and self-contained SVG card of your AniList stats, perfect for your GitHub profile README!
 
-<br>
+<img src="https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=3&bgColor=%23282c34&primaryColor=%2361afef&accentColor=%23c678dd&textColor=%23abb2bf" />
 
-<img src="https://kennanimelist.netlify.app/api?username=kenndeclouv&maxRows=3&bgColor=%23282c34&primaryColor=%2361afef&accentColor=%23c678dd&textColor=%23abb2bf" />
+</div>
 
 ---
 
@@ -26,13 +27,20 @@ Generate a dynamic, themeable, and self-contained SVG card of your AniList stats
 
 ## 🚀 Live Demo & Usage Example
 
-Use the URL `https://kennanimelist.netlify.app/api` and add parameters as needed.
+Use the URL `https://kenndeclouv.netlify.app/animelist` and add parameters as needed.
 
 |                                                                                              Preview                                                                                               | Markdown Code to Use                                                                                                                                      |
 | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|                                       **Default Theme**<br><img src="https://kennanimelist.netlify.app/api?username=kenndeclouv&maxRows=2" width="450px" />                                        | `![AniList](https://kennanimelist.netlify.app/api?username=kenndeclouv&maxRows=2)`                                                                        |
-|    **Dracula Theme**<br><img src="https://kennanimelist.netlify.app/api?username=kenndeclouv&maxRows=2&bgColor=282a36&primaryColor=ff79c6&accentColor=bd93f9&textColor=f8f8f2" width="450px" />    | `![AniList](https://kennanimelist.netlify.app/api?username=kenndeclouv&maxRows=2&bgColor=282a36&primaryColor=ff79c6&accentColor=bd93f9&textColor=f8f8f2)` |
-| **Compact Light Theme**<br><img src="https://kennanimelist.netlify.app/api?username=kenndeclouv&maxRows=1&bgColor=f4f4f4&primaryColor=2e4058&accentColor=49ACD2&textColor=333333" width="450px" /> | `![AniList](https://kennanimelist.netlify.app/api?username=kenndeclouv&maxRows=1&bgColor=f4f4f4&primaryColor=2e4058&accentColor=49ACD2&textColor=333333)` |
+| **Default Theme**<br><img src="https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2" width="450px" /> | `![AniList](https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2)` |
+| **Dracula**<br><img src="https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2&bgColor=282a36&primaryColor=ff79c6&accentColor=bd93f9&textColor=f8f8f2" width="450px" /> | `![AniList](https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2&bgColor=282a36&primaryColor=ff79c6&accentColor=bd93f9&textColor=f8f8f2)` |
+| **Tokyo Night**<br><img src="https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2&bgColor=1a1b26&primaryColor=7aa2f7&accentColor=bb9af7&textColor=c0caf5" width="450px" /> | `![AniList](https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2&bgColor=1a1b26&primaryColor=7aa2f7&accentColor=bb9af7&textColor=c0caf5)` |
+| **Nord**<br><img src="https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2&bgColor=2e3440&primaryColor=88c0d0&accentColor=5e81ac&textColor=d8dee9" width="450px" /> | `![AniList](https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2&bgColor=2e3440&primaryColor=88c0d0&accentColor=5e81ac&textColor=d8dee9)` |
+| **Gruvbox Dark**<br><img src="https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2&bgColor=282828&primaryColor=fe8019&accentColor=b8bb26&textColor=ebdbb2" width="450px" /> | `![AniList](https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2&bgColor=282828&primaryColor=fe8019&accentColor=b8bb26&textColor=ebdbb2)` |
+| **Solarized Light**<br><img src="https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2&bgColor=fdf6e3&primaryColor=268bd2&accentColor=2aa198&textColor=657b83" width="450px" /> | `![AniList](https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2&bgColor=fdf6e3&primaryColor=268bd2&accentColor=2aa198&textColor=657b83)` |
+| **Monokai**<br><img src="https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2&bgColor=272822&primaryColor=f92672&accentColor=a6e22e&textColor=f8f8f2" width="450px" /> | `![AniList](https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2&bgColor=272822&primaryColor=f92672&accentColor=a6e22e&textColor=f8f8f2)` |
+| **One Dark**<br><img src="https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2&bgColor=282c34&primaryColor=61afef&accentColor=c678dd&textColor=abb2bf" width="450px" /> | `![AniList](https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2&bgColor=282c34&primaryColor=61afef&accentColor=c678dd&textColor=abb2bf)` |
+| **Material Oceanic**<br><img src="https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2&bgColor=263238&primaryColor=82aaff&accentColor=21c7a8&textColor=eeffff" width="450px" /> | `![AniList](https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=2&bgColor=263238&primaryColor=82aaff&accentColor=21c7a8&textColor=eeffff)` |
+| **Compact Light**<br><img src="https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=1&bgColor=f4f4f4&primaryColor=2e4058&accentColor=49ACD2&textColor=333333" width="450px" /> | `![AniList](https://kenndeclouv.netlify.app/animelist?username=kenndeclouv&maxRows=1&bgColor=f4f4f4&primaryColor=2e4058&accentColor=49ACD2&textColor=333333)` |
 
 ---
 
@@ -78,7 +86,7 @@ All customization is done via _query parameters_. Colors use hex values (without
     ```bash
     netlify dev
     ```
-    The server will run at `http://localhost:8888`. You can access the endpoint at `http://localhost:8888/api?username=...`
+    The server will run at `http://localhost:8888`. You can access the endpoint at `http://localhost:8888/animelist?username=...`
 
 ---
 

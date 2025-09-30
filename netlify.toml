@@ -2,6 +2,6 @@
   functions = "netlify/functions"
 
 [[redirects]]
-  from = "/api"
-  to = "/.netlify/functions/api"
+  from = "/animelist"
+  to = "/.netlify/functions/animelist"
   status = 200
