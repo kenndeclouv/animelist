@@ -105,7 +105,6 @@ const createAnimeTableRow = (
 };
 
 export default async function handler(event, context) {
-  // PERUBAHAN #1: Ambil query dari event.queryStringParameters
   const query = event.queryStringParameters || {};
 
   // Customization via query
@@ -126,7 +125,6 @@ export default async function handler(event, context) {
   const titleFontSize = parseInt(query.titleFontSize) || 28;
   const titleMargin = parseInt(query.titleMargin) || 32;
 
-  // PERUBAHAN #2: Siapkan headers di awal untuk dikirim nanti
   const headers = {
     "Content-Type": "image/svg+xml",
     "Cache-Control": "public, max-age=7200, must-revalidate",
@@ -137,19 +135,20 @@ export default async function handler(event, context) {
     const user = await anilist.user.all(targetUsername);
 
     if (!user) {
-      // PERUBAHAN #3: Semua res.send() diubah jadi return object
-      return {
-        statusCode: 404,
+      // PERUBAHAN #1: Return objek Response untuk error 'User Not Found'
+      const errorBody = createErrorCard(
+        `User '${targetUsername}' Not Found`,
+        bgColor,
+        primaryColor
+      );
+      return new Response(errorBody, {
+        status: 404,
         headers,
-        body: createErrorCard(
-          `User '${targetUsername}' Not Found`,
-          bgColor,
-          primaryColor
-        ),
-      };
+      });
     }
     const userId = user.id;
 
+    // ... (SEMUA LOGIKA UTAMAMU DARI SINI SAMPAI PEMBUATAN SVG SAMA PERSIS) ...
     const lists = await anilist.lists.anime(userId);
 
     // Pisahkan list berdasarkan kategori
@@ -275,20 +274,20 @@ export default async function handler(event, context) {
       </svg>
     `;
 
-    // PERUBAHAN #4: Kirim response sukses dengan return object
-    return {
-      statusCode: 200,
+    // PERUBAHAN #2: Return objek Response untuk SVG yang berhasil dibuat
+    return new Response(svg, {
+      status: 200,
       headers,
-      body: svg,
-    };
+    });
+
   } catch (error) {
     console.error(error);
-    // PERUBAHAN #5: Kirim response error dengan return object
-    return {
-      statusCode: 500,
+    // PERUBAHAN #3: Return objek Response untuk error tak terduga
+    const errorBody = createErrorCard("Could not fetch data.", "#23272e", "#e06c75");
+    return new Response(errorBody, {
+      status: 500,
       headers,
-      body: createErrorCard("Could not fetch data.", "#23272e", "#e06c75"),
-    };
+    });
   }
 }
 
