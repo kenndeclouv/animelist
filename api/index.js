@@ -13,28 +13,41 @@ const createErrorCard = (message) => {
 // --- HELPER FUNCTION BARU ---
 // Fungsi ini tugasnya membuat satu baris kategori (misal: "Watching") lengkap dengan posternya
 const createRowSVG = (title, entries, yOffset) => {
-  if (!entries || entries.length === 0) return ""; // Kalau listnya kosong, jangan render apa-apa
+  if (!entries || entries.length === 0) return "";
 
   const posterWidth = 80;
   const posterHeight = 112;
 
-  const posters = entries
-    .slice(0, 4)
+  // --- INI DIA PERBAIKANNYA ---
+  // 1. Filter dulu untuk memastikan setiap entri punya data gambar yang lengkap
+  const validEntries = entries
+    .filter(
+      (entry) =>
+        entry.media && entry.media.coverImage && entry.media.coverImage.large
+    )
+    .slice(0, 4); // Ambil 4 entri pertama YANG VALID
+
+  // 2. Baru lakukan .map() pada data yang sudah pasti aman
+  const posters = validEntries
     .map((entry, index) => {
-      // Ambil 4 poster pertama
       const xOffset = 20 + index * (posterWidth + 15);
-      return `<image href="${entry.media.coverImage.large}" x="${xOffset}" y="${
+      // Sekarang baris ini dijamin aman karena sudah kita filter
+      const imageUrl = entry.media.coverImage.large;
+      return `<image href="${imageUrl}" x="${xOffset}" y="${
         yOffset + 20
       }" width="${posterWidth}" height="${posterHeight}" rx="8" ry="8" />`;
     })
     .join("");
 
+  // Kalau setelah difilter ternyata tidak ada entri yang valid, jangan render apa-apa
+  if (posters.length === 0) return "";
+
   return `
-    <text x="20" y="${
-      yOffset + 12
-    }" font-size="14" fill="#98c379" font-weight="bold">${title}</text>
-    ${posters}
-  `;
+      <text x="20" y="${
+        yOffset + 12
+      }" font-size="14" fill="#98c379" font-weight="bold">${title}</text>
+      ${posters}
+    `;
 };
 
 export default async function handler(req, res) {
