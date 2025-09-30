@@ -1,7 +1,21 @@
+/**
+ * @file AniList SVG Table API Netlify Function
+ * @copyright Copyright (c) 2025 kenndeclouv
+ * @license MIT
+ *
+ * This file implements a Netlify serverless function that generates a customizable SVG table
+ * for an AniList user, showing their Watching, Completed, and Planning anime lists with inlined poster images.
+ * The SVG is suitable for embedding in GitHub READMEs and personal sites.
+ */
+
 import Anilist from "anilist-node";
 const anilist = new Anilist();
 
-// Helper to escape XML
+/**
+ * Escapes special XML characters in a string to ensure valid SVG/XML output.
+ * @param {string} unsafe - The string to escape.
+ * @returns {string} The escaped string.
+ */
 const escapeXml = (unsafe) => {
   return unsafe
     ? unsafe.replace(
@@ -18,7 +32,12 @@ const escapeXml = (unsafe) => {
     : "";
 };
 
-// New function to fetch and encode image as base64
+/**
+ * Fetches an image from a URL and encodes it as a base64 data URI.
+ * @async
+ * @param {string} url - The image URL.
+ * @returns {Promise<string>} The base64-encoded data URI of the image, or an empty string on failure.
+ */
 const getBase64Image = async (url) => {
   try {
     const response = await fetch(url, {
@@ -28,7 +47,7 @@ const getBase64Image = async (url) => {
     });
     const buffer = await response.arrayBuffer();
     const base64 = Buffer.from(buffer).toString("base64");
-    // Pastikan format gambarnya benar (poster anilist seringkali jpeg)
+    // Ensure the image format is correct (AniList posters are often jpeg)
     const contentType = response.headers.get("content-type") || "image/jpeg";
     return `data:${contentType};base64,${base64}`;
   } catch (error) {
@@ -37,7 +56,13 @@ const getBase64Image = async (url) => {
   }
 };
 
-// Error card with customizable colors
+/**
+ * Creates an SVG error card with a customizable message and colors.
+ * @param {string} message - The error message to display.
+ * @param {string} [bgColor="#282c34"] - The background color of the card.
+ * @param {string} [primaryColor="#e06c75"] - The primary accent color.
+ * @returns {string} SVG markup for the error card.
+ */
 const createErrorCard = (
   message,
   bgColor = "#282c34",
@@ -54,7 +79,18 @@ const createErrorCard = (
   `;
 };
 
-// Table row for anime entry, now takes base64Image as argument
+/**
+ * Creates an SVG table row for an anime entry, including the poster image and details.
+ * @param {object} entry - The anime list entry object from AniList.
+ * @param {string} base64Image - The base64-encoded poster image data URI.
+ * @param {number} y - The y-coordinate for the row.
+ * @param {number} rowHeight - The height of the row.
+ * @param {string} primaryColor - The primary accent color.
+ * @param {string} accentColor - The accent bar color.
+ * @param {string} textColor - The text color.
+ * @param {string} posterBg - The background color for the poster area.
+ * @returns {string} SVG markup for the table row.
+ */
 const createAnimeTableRow = (
   entry,
   base64Image,
@@ -104,6 +140,31 @@ const createAnimeTableRow = (
   `;
 };
 
+/**
+ * Netlify handler function for the AniList SVG Table API.
+ *
+ * Query Parameters:
+ * - username (string): AniList username. Default: "kenndeclouv"
+ * - title (string): Custom title. Default: "<username>'s AniList"
+ * - bgColor (string): Background color. Default: "#23272e"
+ * - primaryColor (string): Main accent color. Default: "#49ACD2"
+ * - accentColor (string): Section accent bar color. Default: "#49ACD2"
+ * - sectionBg (string): Section header background. Default: "#23272e"
+ * - posterBg (string): Row accent background. Default: "#49ACD2"
+ * - textColor (string): Text color. Default: "#abb2bf"
+ * - width (number): SVG width. Default: 560
+ * - rowHeight (number): Row height. Default: 56
+ * - headerHeight (number): Section header height. Default: 38
+ * - headerFontSize (number): Section header font size. Default: 18
+ * - titleFontSize (number): Main title font size. Default: 28
+ * - titleMargin (number): Top margin for title. Default: 32
+ * - maxRows (number): Maximum rows per section. Default: 5
+ * - sectionGap (number): Gap between sections. Default: 18
+ *
+ * @param {object} event - Netlify event object, containing queryStringParameters.
+ * @param {object} context - Netlify context object.
+ * @returns {Promise<Response>} SVG image as a Response object.
+ */
 export default async function handler(event, context) {
   const query = event.queryStringParameters || {};
 
@@ -135,7 +196,7 @@ export default async function handler(event, context) {
     const user = await anilist.user.all(targetUsername);
 
     if (!user) {
-      // PERUBAHAN #1: Return objek Response untuk error 'User Not Found'
+      // Return Response object for 'User Not Found' error
       const errorBody = createErrorCard(
         `User '${targetUsername}' Not Found`,
         bgColor,
@@ -148,10 +209,10 @@ export default async function handler(event, context) {
     }
     const userId = user.id;
 
-    // ... (SEMUA LOGIKA UTAMAMU DARI SINI SAMPAI PEMBUATAN SVG SAMA PERSIS) ...
+    // Fetch anime lists for the user
     const lists = await anilist.lists.anime(userId);
 
-    // Pisahkan list berdasarkan kategori
+    // Separate lists by category
     const watchingList =
       lists.find((list) => list.name === "Watching" || list.name === "Current")
         ?.entries || [];
@@ -177,8 +238,11 @@ export default async function handler(event, context) {
       imageMap[entry.media.id] = base64Images[idx];
     });
 
-    // Table columns: Title | Format | Score | Progress | Status
-    // Table header
+    /**
+     * Generates the SVG table header row.
+     * @param {number} y - The y-coordinate for the header.
+     * @returns {string} SVG markup for the table header.
+     */
     const tableHeader = (y) => `
       <g>
         <rect x="0" y="${y}" width="${width}" height="32" fill="${bgColor}" opacity="0.95"/>
@@ -197,7 +261,13 @@ export default async function handler(event, context) {
       </g>
     `;
 
-    // Helper to render a section with inlined images
+    /**
+     * Renders a section of the SVG table for a given list category.
+     * @param {string} title - The section title.
+     * @param {Array<object>} entries - The anime entries for the section.
+     * @param {number} yStart - The starting y-coordinate for the section.
+     * @returns {{section: string, height: number}} SVG markup and height for the section.
+     */
     const renderSection = (title, entries, yStart) => {
       let section = "";
       let currentY = yStart;
@@ -274,61 +344,22 @@ export default async function handler(event, context) {
       </svg>
     `;
 
-    // PERUBAHAN #2: Return objek Response untuk SVG yang berhasil dibuat
+    // Return Response object for successfully generated SVG
     return new Response(svg, {
       status: 200,
       headers,
     });
-
   } catch (error) {
     console.error(error);
-    // PERUBAHAN #3: Return objek Response untuk error tak terduga
-    const errorBody = createErrorCard("Could not fetch data.", "#23272e", "#e06c75");
+    // Return Response object for unexpected errors
+    const errorBody = createErrorCard(
+      "Could not fetch data.",
+      "#23272e",
+      "#e06c75"
+    );
     return new Response(errorBody, {
       status: 500,
       headers,
     });
   }
 }
-
-/*
-========================
-AniList SVG Table API Documentation
-========================
-
-Endpoint: /api/index.js
-
-Description:
-  Generate a customizable SVG anime list table for an AniList user, separated by Watching, Completed, and Planning lists. Each list is rendered as a section (row group) in a vertical table layout, with each anime as a row. The design is fully customizable via query parameters.
-
-Query Parameters:
-  - username:      (string) AniList username (default: "kenndeclouv")
-  - title:         (string) Custom title for the SVG (default: "<username>'s AniList")
-  - bgColor:       (string) Background color (default: "#23272e")
-  - primaryColor:  (string) Main accent color (default: "#49ACD2")
-  - accentColor:   (string) Color for section accent bars (default: "#49ACD2")
-  - sectionBg:     (string) Section header background color (default: "#23272e")
-  - posterBg:      (string) Row background accent color (default: "#49ACD2")
-  - textColor:     (string) Text color (default: "#abb2bf")
-  - width:         (number) SVG width in px (default: 560)
-  - rowHeight:     (number) Height of each anime row (default: 56)
-  - headerHeight:  (number) Height of each section header (default: 38)
-  - headerFontSize:(number) Font size for section headers (default: 18)
-  - titleFontSize: (number) Font size for main title (default: 28)
-  - titleMargin:   (number) Top margin for main title (default: 32)
-  - sectionGap:    (number) Gap between sections (default: 18)
-  - maxRows:       (number) Max rows per section (default: 5)
-
-Features:
-  - Each list (Watching, Completed, Planning) is rendered as a separate table section.
-  - Each anime row shows: Poster, Title, Format, Score, Progress, Status.
-  - Fully responsive SVG layout, customizable colors, font sizes, and row counts.
-  - If a list is empty, a message is shown in that section.
-  - If user not found, returns a styled SVG error card.
-
-Example Usage:
-  /api/index.js?username=kenndeclouv&primaryColor=%2349ACD2&bgColor=%2323272e&maxRows=3
-
-Customization:
-  All colors and sizes can be changed via query parameters for full UI/UX flexibility.
-*/
