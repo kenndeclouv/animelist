@@ -104,43 +104,49 @@ const createAnimeTableRow = (
   `;
 };
 
-export default async function handler(req, res) {
-  // Customization via query
-  const bgColor = req.query.bgColor || "#23272e";
-  const primaryColor = req.query.primaryColor || "#49ACD2";
-  const accentColor = req.query.accentColor || "#49ACD2";
-  const sectionBg = req.query.sectionBg || "#23272e";
-  const posterBg = req.query.posterBg || "#49ACD2";
-  const textColor = req.query.textColor || "#abb2bf";
-  const titleText =
-    req.query.title ||
-    (req.query.username ? `${req.query.username}'s AniList` : "AniList");
-  const maxRows = parseInt(req.query.maxRows) || 5;
-  const width = parseInt(req.query.width) || 560;
-  const rowHeight = parseInt(req.query.rowHeight) || 56;
-  const headerHeight = parseInt(req.query.headerHeight) || 38;
-  const headerFontSize = parseInt(req.query.headerFontSize) || 18;
-  const sectionGap = parseInt(req.query.sectionGap) || 18;
-  const titleFontSize = parseInt(req.query.titleFontSize) || 28;
-  const titleMargin = parseInt(req.query.titleMargin) || 32;
+export default async function handler(event, context) {
+  // PERUBAHAN #1: Ambil query dari event.queryStringParameters
+  const query = event.queryStringParameters || {};
 
-  res.setHeader("Content-Type", "image/svg+xml");
-  res.setHeader("Cache-Control", "public, max-age=7200, must-revalidate");
+  // Customization via query
+  const bgColor = query.bgColor || "#23272e";
+  const primaryColor = query.primaryColor || "#49ACD2";
+  const accentColor = query.accentColor || "#49ACD2";
+  const sectionBg = query.sectionBg || "#23272e";
+  const posterBg = query.posterBg || "#49ACD2";
+  const textColor = query.textColor || "#abb2bf";
+  const titleText =
+    query.title || (query.username ? `${query.username}'s AniList` : "AniList");
+  const maxRows = parseInt(query.maxRows) || 5;
+  const width = parseInt(query.width) || 560;
+  const rowHeight = parseInt(query.rowHeight) || 56;
+  const headerHeight = parseInt(query.headerHeight) || 38;
+  const headerFontSize = parseInt(query.headerFontSize) || 18;
+  const sectionGap = parseInt(query.sectionGap) || 18;
+  const titleFontSize = parseInt(query.titleFontSize) || 28;
+  const titleMargin = parseInt(query.titleMargin) || 32;
+
+  // PERUBAHAN #2: Siapkan headers di awal untuk dikirim nanti
+  const headers = {
+    "Content-Type": "image/svg+xml",
+    "Cache-Control": "public, max-age=7200, must-revalidate",
+  };
 
   try {
-    const targetUsername = req.query.username || "kenndeclouv";
+    const targetUsername = query.username || "kenndeclouv";
     const user = await anilist.user.all(targetUsername);
 
     if (!user) {
-      return res
-        .status(404)
-        .send(
-          createErrorCard(
-            `User '${targetUsername}' Not Found`,
-            bgColor,
-            primaryColor
-          )
-        );
+      // PERUBAHAN #3: Semua res.send() diubah jadi return object
+      return {
+        statusCode: 404,
+        headers,
+        body: createErrorCard(
+          `User '${targetUsername}' Not Found`,
+          bgColor,
+          primaryColor
+        ),
+      };
     }
     const userId = user.id;
 
@@ -269,12 +275,20 @@ export default async function handler(req, res) {
       </svg>
     `;
 
-    res.status(200).send(svg);
+    // PERUBAHAN #4: Kirim response sukses dengan return object
+    return {
+      statusCode: 200,
+      headers,
+      body: svg,
+    };
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .send(createErrorCard("Could not fetch data.", "#23272e", "#e06c75"));
+    // PERUBAHAN #5: Kirim response error dengan return object
+    return {
+      statusCode: 500,
+      headers,
+      body: createErrorCard("Could not fetch data.", "#23272e", "#e06c75"),
+    };
   }
 }
 
