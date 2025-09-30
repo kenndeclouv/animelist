@@ -1,11 +1,15 @@
 import Anilist from "anilist-node";
 const anilist = new Anilist();
 
-// Helper function untuk membuat SVG error
 const createErrorCard = (message) => {
-  return `<svg width="450" height="150" xmlns="http://www.w3.org/2000/svg" ...> ... </svg>`; // (Fungsi ini tetap sama, sengaja disingkat biar fokus ke yang baru)
+  return `
+      <svg width="330" height="150" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 150" style="font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', sans-serif;">
+        <rect width="100%" height="100%" fill="#282c34" rx="10" ry="10" />
+        <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" font-size="16" fill="#e06c75" font-weight="bold">Oops! An Error Occurred</text>
+        <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" font-size="12" fill="#abb2bf">${message}</text>
+      </svg>
+    `;
 };
-
 // --- HELPER FUNCTION BARU ---
 // Fungsi ini tugasnya membuat satu baris kategori (misal: "Watching") lengkap dengan posternya
 const createRowSVG = (title, entries, yOffset) => {
