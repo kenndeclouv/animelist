@@ -213,7 +213,8 @@ export const handler = async (event, context) => {
   const posterBg = normalizeColor(query.posterBg || "#49ACD2");
   const textColor = normalizeColor(query.textColor || "#abb2bf");
   const titleText =
-    query.title || (query.username ? `${query.username}'s AniList` : "kenndeclouv's AniList");
+    query.title ||
+    (query.username ? `${query.username}'s AniList` : "kenndeclouv's AniList");
   const maxRows = parseInt(query.maxRows) || 5;
   const width = parseInt(query.width) || 560;
   const rowHeight = parseInt(query.rowHeight) || 56;
@@ -365,14 +366,8 @@ export const handler = async (event, context) => {
     // SVG
     // Remove shadow (no filter, no shadow, no drop-shadow, no filter attribute)
     const svg = `
-      <svg width="${width}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${svgHeight}" style="font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', sans-serif;">
-        <defs>
-          <linearGradient id="bgGradient" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="${bgColor}" />
-            <stop offset="100%" stop-color="#181a20" />
-          </linearGradient>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#bgGradient)" rx="18" ry="18" />
+       <svg width="${width}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${svgHeight}" style="font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', sans-serif;">
+            <rect width="100%" height="100%" fill="${bgColor}" rx="18" ry="18" />
         <text x="24" y="${
           titleMargin + titleFontSize
         }" font-size="${titleFontSize}" fill="${primaryColor}" font-weight="bold" style="letter-spacing:1px;">${escapeXml(
@@ -380,8 +375,8 @@ export const handler = async (event, context) => {
     )}</text>
         ${tableHeader(titleMargin + titleFontSize + 2)}
         ${svgSections}
-      </svg>
-    `;
+       </svg>
+      `;
 
     // Return Response object for successfully generated SVG
     return {
