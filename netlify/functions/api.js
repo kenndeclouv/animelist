@@ -165,7 +165,7 @@ const createAnimeTableRow = (
  * @param {object} context - Netlify context object.
  * @returns {Promise<Response>} SVG image as a Response object.
  */
-export default async function handler(event, context) {
+export const handler = async (event, context) => {
   const query = event.queryStringParameters || {};
 
   // Customization via query
@@ -202,10 +202,11 @@ export default async function handler(event, context) {
         bgColor,
         primaryColor
       );
-      return new Response(errorBody, {
-        status: 404,
+      return {
+        statusCode: 404,
         headers,
-      });
+        body: errorBody,
+      };
     }
     const userId = user.id;
 
@@ -345,10 +346,11 @@ export default async function handler(event, context) {
     `;
 
     // Return Response object for successfully generated SVG
-    return new Response(svg, {
-      status: 200,
+    return {
+      statusCode: 200,
       headers,
-    });
+      body: svg,
+    };
   } catch (error) {
     console.error(error);
     // Return Response object for unexpected errors
@@ -357,9 +359,10 @@ export default async function handler(event, context) {
       "#23272e",
       "#e06c75"
     );
-    return new Response(errorBody, {
-      status: 500,
+    return {
+      statusCode: 500,
       headers,
-    });
+      body: errorBody,
+    };
   }
-}
+};
