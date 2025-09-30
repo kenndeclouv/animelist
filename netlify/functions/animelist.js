@@ -306,7 +306,8 @@ export const handler = async (event, context) => {
 
   // Layout type: "list" (default, row/table) or "grid"
   const layout = (query.layout || "list").toLowerCase();
-  const gridColumns = parseInt(query.gridColumns) || 3;
+  // Force gridColumns to 2 for grid layout as per instruction
+  const gridColumns = 2;
   const gridCardWidth = parseInt(query.gridCardWidth) || 140;
   const gridCardHeight = parseInt(query.gridCardHeight) || 210;
   const gridGap = 18;
@@ -455,7 +456,7 @@ export const handler = async (event, context) => {
       } else {
         // Calculate number of rows needed
         const n = Math.min(entries.length, maxRows);
-        const cols = gridColumns;
+        const cols = 2; // Force 2 columns for grid layout
         const rows = Math.ceil(n / cols);
         let cardIndex = 0;
         for (let row = 0; row < rows; row++) {
@@ -493,7 +494,7 @@ export const handler = async (event, context) => {
       // Grid layout
       // Calculate grid width for all columns, adjust SVG width if needed
       const gridTotalWidth =
-        gridColumns * gridCardWidth + (gridColumns - 1) * gridGap;
+        2 * gridCardWidth + (2 - 1) * gridGap; // Always 2 columns
       const svgWidth = Math.max(width, gridTotalWidth);
 
       // Watching
