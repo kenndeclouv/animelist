@@ -21,14 +21,19 @@ const escapeXml = (unsafe) => {
 // New function to fetch and encode image as base64
 const getBase64Image = async (url) => {
   try {
-    // Use global fetch (Node 18+ or polyfill)
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "GitHub-AniList-SVG-Widget/1.0",
+      },
+    });
     const buffer = await response.arrayBuffer();
     const base64 = Buffer.from(buffer).toString("base64");
-    return `data:image/jpeg;base64,${base64}`;
+    // Pastikan format gambarnya benar (poster anilist seringkali jpeg)
+    const contentType = response.headers.get("content-type") || "image/jpeg";
+    return `data:${contentType};base64,${base64}`;
   } catch (error) {
     console.error("Failed to fetch and encode image:", error);
-    return ""; // Return empty string on error
+    return "";
   }
 };
 
