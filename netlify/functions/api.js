@@ -33,6 +33,36 @@ const escapeXml = (unsafe) => {
 };
 
 /**
+ * Normalizes color input so user can use # or not, and doesn't need to encode # as %23.
+ * Accepts: "#49ACD2", "49ACD2", "rgb(0,0,0)", "red", etc.
+ * If hex and missing #, adds it.
+ * @param {string} color
+ * @returns {string}
+ */
+const normalizeColor = (color) => {
+  if (!color) return color;
+  // If already starts with # or is not a hex color, return as is
+  if (
+    color.startsWith("#") ||
+    color.startsWith("rgb") ||
+    color.startsWith("hsl") ||
+    color.startsWith("var(") ||
+    /^[a-zA-Z]+$/.test(color)
+  ) {
+    return color;
+  }
+  // If it's a 3 or 6 digit hex without #, add #
+  if (/^[0-9a-fA-F]{6}$/.test(color) || /^[0-9a-fA-F]{3}$/.test(color)) {
+    return "#" + color;
+  }
+  // If it's %23xxxxxx, replace with #
+  if (color.startsWith("%23")) {
+    return "#" + color.slice(3);
+  }
+  return color;
+};
+
+/**
  * Fetches an image from a URL and encodes it as a base64 data URI.
  * @async
  * @param {string} url - The image URL.
@@ -68,6 +98,8 @@ const createErrorCard = (
   bgColor = "#282c34",
   primaryColor = "#e06c75"
 ) => {
+  bgColor = normalizeColor(bgColor);
+  primaryColor = normalizeColor(primaryColor);
   return `
     <svg width="700" height="150" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 150" style="font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', sans-serif;">
       <rect width="100%" height="100%" fill="${bgColor}" rx="16" ry="16" />
@@ -101,6 +133,11 @@ const createAnimeTableRow = (
   textColor,
   posterBg
 ) => {
+  primaryColor = normalizeColor(primaryColor);
+  accentColor = normalizeColor(accentColor);
+  textColor = normalizeColor(textColor);
+  posterBg = normalizeColor(posterBg);
+
   const posterWidth = 48;
   const posterHeight = rowHeight - 12;
   const title =
@@ -168,15 +205,15 @@ const createAnimeTableRow = (
 export const handler = async (event, context) => {
   const query = event.queryStringParameters || {};
 
-  // Customization via query
-  const bgColor = query.bgColor || "#23272e";
-  const primaryColor = query.primaryColor || "#49ACD2";
-  const accentColor = query.accentColor || "#49ACD2";
-  const sectionBg = query.sectionBg || "#23272e";
-  const posterBg = query.posterBg || "#49ACD2";
-  const textColor = query.textColor || "#abb2bf";
+  // Customization via query, normalize all color params
+  const bgColor = normalizeColor(query.bgColor || "#23272e");
+  const primaryColor = normalizeColor(query.primaryColor || "#49ACD2");
+  const accentColor = normalizeColor(query.accentColor || "#49ACD2");
+  const sectionBg = normalizeColor(query.sectionBg || "#23272e");
+  const posterBg = normalizeColor(query.posterBg || "#49ACD2");
+  const textColor = normalizeColor(query.textColor || "#abb2bf");
   const titleText =
-    query.title || (query.username ? `${query.username}'s AniList` : "AniList");
+    query.title || (query.username ? `${query.username}'s AniList` : "kenndeclouv's AniList");
   const maxRows = parseInt(query.maxRows) || 5;
   const width = parseInt(query.width) || 560;
   const rowHeight = parseInt(query.rowHeight) || 56;
@@ -326,6 +363,7 @@ export const handler = async (event, context) => {
     const svgHeight = y + 24;
 
     // SVG
+    // Remove shadow (no filter, no shadow, no drop-shadow, no filter attribute)
     const svg = `
       <svg width="${width}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${svgHeight}" style="font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', sans-serif;">
         <defs>
