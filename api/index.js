@@ -12,34 +12,31 @@ const createErrorCard = (message) => {
 };
 // --- HELPER FUNCTION BARU ---
 // Fungsi ini tugasnya membuat satu baris kategori (misal: "Watching") lengkap dengan posternya
+// Ganti fungsi lama dengan versi final yang sudah benar ini
 const createRowSVG = (title, entries, yOffset) => {
   if (!entries || entries.length === 0) return "";
 
   const posterWidth = 80;
   const posterHeight = 112;
 
-  // --- INI DIA PERBAIKANNYA ---
-  // 1. Filter dulu untuk memastikan setiap entri punya data gambar yang lengkap
+  // --- INI DIA PERBAIKAN FINALNYA ---
+  // 1. Filter hanya untuk memastikan ada media.id
   const validEntries = entries
-    .filter(
-      (entry) =>
-        entry.media && entry.media.coverImage && entry.media.coverImage.large
-    )
-    .slice(0, 4); // Ambil 4 entri pertama YANG VALID
+    .filter((entry) => entry.media && entry.media.id)
+    .slice(0, 4);
 
-  // 2. Baru lakukan .map() pada data yang sudah pasti aman
+  // 2. Buat URL gambar secara manual menggunakan media.id
   const posters = validEntries
     .map((entry, index) => {
       const xOffset = 20 + index * (posterWidth + 15);
-      // Sekarang baris ini dijamin aman karena sudah kita filter
-      const imageUrl = entry.media.coverImage.large;
+      // Ini formula rahasianya!
+      const imageUrl = `https://img.anili.st/media/${entry.media.id}`;
       return `<image href="${imageUrl}" x="${xOffset}" y="${
         yOffset + 20
       }" width="${posterWidth}" height="${posterHeight}" rx="8" ry="8" />`;
     })
     .join("");
 
-  // Kalau setelah difilter ternyata tidak ada entri yang valid, jangan render apa-apa
   if (posters.length === 0) return "";
 
   return `
