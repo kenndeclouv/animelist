@@ -138,7 +138,7 @@ const createAnimeTableRow = (
   primaryColor = normalizeColor(primaryColor);
   accentColor = normalizeColor(accentColor);
   textColor = normalizeColor(textColor);
-  posterBg = normalizeColor(posterBg);
+  posterBg = posterBg ? normalizeColor(posterBg) : normalizeColor(primaryColor);
 
   const posterWidth = 48;
   const posterHeight = rowHeight - 12;
@@ -147,35 +147,40 @@ const createAnimeTableRow = (
     entry.media.title.english ||
     entry.media.title.native;
   const score = entry.score > 0 ? `⭐ ${entry.score} / 10` : "-";
+  const link = entry.media.siteUrl || "";
   const progress = entry.progress > 0 ? `Ep ${entry.progress}` : "-";
   const status = entry.status || "-";
   return `
-    <g>
-      <rect x="0" y="${y}" width="100%" height="${rowHeight}" fill="${posterBg}" opacity="0.12"/>
-      <rect x="0" y="${y}" width="8" height="${rowHeight}" fill="${accentColor}" rx="4"/>
-      <image href="${base64Image}" x="16" y="${
+    <a href="${link}" target="_blank">
+      <g>
+        <rect x="0" y="${y}" width="100%" height="${rowHeight}" fill="${posterBg}" opacity="0.12"/>
+        <rect x="0" y="${y}" width="8" height="${rowHeight}" fill="${accentColor}" rx="4"/>
+        <image href="${base64Image}" x="16" y="${
     y + 6
   }" width="${posterWidth}" height="${posterHeight}" rx="8" ry="8"/>
-      <text x="76" y="${
-        y + 26
-      }" font-size="16" fill="${primaryColor}" font-weight="bold">${escapeXml(
+        <text x="76" y="${
+          y + 26
+        }" font-size="16" fill="${primaryColor}" font-weight="bold">${escapeXml(
     title
   )}</text>
-      <text x="76" y="${y + 46}" font-size="13" fill="${textColor}">${escapeXml(
+        <text x="76" y="${
+          y + 46
+        }" font-size="13" fill="${textColor}">${escapeXml(
     entry.media.format || "-"
   )}</text>
-      <text x="320" y="${
-        y + rowHeight / 2 + 5
-      }" font-size="14" fill="${textColor}" text-anchor="middle">${score}</text>
-      <text x="400" y="${
-        y + rowHeight / 2 + 5
-      }" font-size="14" fill="${textColor}" text-anchor="middle">${progress}</text>
-      <text x="480" y="${
-        y + rowHeight / 2 + 5
-      }" font-size="14" fill="${textColor}" text-anchor="middle">${escapeXml(
+        <text x="320" y="${
+          y + rowHeight / 2 + 5
+        }" font-size="14" fill="${textColor}" text-anchor="middle">${score}</text>
+        <text x="400" y="${
+          y + rowHeight / 2 + 5
+        }" font-size="14" fill="${textColor}" text-anchor="middle">${progress}</text>
+        <text x="480" y="${
+          y + rowHeight / 2 + 5
+        }" font-size="14" fill="${textColor}" text-anchor="middle">${escapeXml(
     status
   )}</text>
-    </g>
+      </g>
+    </a>
   `;
 };
 
@@ -221,6 +226,7 @@ const createAnimeGridCard = (
     entry.media.title.native;
   const score = entry.score > 0 ? `⭐ ${entry.score}` : "";
   const progress = entry.progress > 0 ? `Ep ${entry.progress}` : "";
+  const link = entry.media.siteUrl || "";
 
   // Poster takes up the top part of the card
   const posterHeight = cardHeight * 0.65;
@@ -243,34 +249,36 @@ const createAnimeGridCard = (
   const textYStart = y + posterHeight + 20;
 
   return `
-    <g>
-      <rect x="${x}" y="${y}" width="${cardWidth}" height="${cardHeight}" fill="${posterBg}" opacity="0.10" rx="12"/>
-      <image href="${base64Image}" x="${x + cardPadding}" y="${
+    <a href="${link}" target="_blank">
+      <g>
+        <rect x="${x}" y="${y}" width="${cardWidth}" height="${cardHeight}" fill="${posterBg}" opacity="0.10" rx="12"/>
+        <image href="${base64Image}" x="${x + cardPadding}" y="${
     y + cardPadding
   }" width="${
     cardWidth - cardPadding * 2
   }" height="${posterHeight}" rx="8" ry="8" style="object-fit: cover;"/>
-      
-      <text x="${
-        x + cardWidth / 2
-      }" y="${textYStart}" font-size="14" fill="${primaryColor}" font-weight="bold" text-anchor="middle">
-        <tspan>${escapeXml(titleLine1)}</tspan>
-        ${
-          titleLine2
-            ? `<tspan x="${x + cardWidth / 2}" dy="1.2em">${escapeXml(
-                titleLine2
-              )}</tspan>`
-            : ""
-        }
-      </text>
-      
-      <text x="${x + cardPadding}" y="${
+        
+        <text x="${
+          x + cardWidth / 2
+        }" y="${textYStart}" font-size="14" fill="${primaryColor}" font-weight="bold" text-anchor="middle">
+          <tspan>${escapeXml(titleLine1)}</tspan>
+          ${
+            titleLine2
+              ? `<tspan x="${x + cardWidth / 2}" dy="1.2em">${escapeXml(
+                  titleLine2
+                )}</tspan>`
+              : ""
+          }
+        </text>
+        
+        <text x="${x + cardPadding}" y="${
     y + cardHeight - cardPadding
   }" font-size="12" fill="${accentColor}" font-weight="bold" dominant-baseline="middle">${score}</text>
-      <text x="${x + cardWidth - cardPadding}" y="${
+        <text x="${x + cardWidth - cardPadding}" y="${
     y + cardHeight - cardPadding
   }" font-size="12" fill="${textColor}" text-anchor="end" dominant-baseline="middle">${progress}</text>
-    </g>
+      </g>
+    </a>
   `;
 };
 
@@ -312,8 +320,8 @@ export const handler = async (event, context) => {
   const bgColor = normalizeColor(query.bgColor || "#23272e");
   const primaryColor = normalizeColor(query.primaryColor || "#49ACD2");
   const accentColor = normalizeColor(query.accentColor || "#49ACD2");
-  const sectionBg = normalizeColor(query.sectionBg || "#23272e");
-  const posterBg = normalizeColor(query.posterBg || "#49ACD2");
+  const sectionBg = normalizeColor(query.sectionBg || "#FFFFFF00");
+  const posterBg = normalizeColor(query.posterBg || primaryColor);
   const textColor = normalizeColor(query.textColor || "#abb2bf");
   const titleText =
     query.title ||
@@ -329,7 +337,11 @@ export const handler = async (event, context) => {
   const titleFontSize = parseInt(query.titleFontSize) || 28;
   const titleMargin = parseInt(query.titleMargin) || 32;
 
+  const bgImage = query.bgImage;
+
   const layout = (query.layout || "list").toLowerCase();
+
+  const useTableHeader = query.useTableHeader !== "false";
 
   // --- FIX: Simplified Grid Layout Logic to a fixed 2-column layout ---
   const gridColumns = 2; // Hardcoded to 2 columns as requested
@@ -373,19 +385,34 @@ export const handler = async (event, context) => {
       ...completedList.slice(0, maxRows),
       ...planningList.slice(0, maxRows),
     ];
-    const imagePromises = allEntries.map((entry) => {
+
+    // --- NEW: Fetch gambar background secara paralel dengan poster anime ---
+    const allPromises = allEntries.map((entry) => {
       const imageUrl = `https://img.anili.st/media/${entry.media.id}`;
       return getBase64Image(imageUrl);
     });
-    const base64Images = await Promise.all(imagePromises);
+
+    // Jika ada bgImage, tambahkan ke list promise
+    if (bgImage) {
+      allPromises.push(getBase64Image(bgImage));
+    }
+
+    const allBase64Images = await Promise.all(allPromises);
+
+    // Pisahkan kembali hasilnya
+    let base64BgImage = "";
+    if (bgImage) {
+      base64BgImage = allBase64Images.pop(); // Ambil elemen terakhir (gambar bg)
+    }
+
     const imageMap = {};
     allEntries.forEach((entry, idx) => {
-      imageMap[entry.media.id] = base64Images[idx];
+      imageMap[entry.media.id] = allBase64Images[idx]; // Sisanya adalah poster
     });
 
     const tableHeader = (y) => `
       <g>
-        <rect x="0" y="${y}" width="${width}" height="32" fill="${bgColor}" opacity="0.95"/>
+        <rect x="0" y="${y}" width="${width}" height="32" fill="${posterBg}" opacity="0.10"/>
         <text x="76" y="${
           y + 22
         }" font-size="15" fill="${primaryColor}" font-weight="bold">Title</text>
@@ -435,8 +462,7 @@ export const handler = async (event, context) => {
       }
       return { section, height: currentY - yStart };
     };
-    
-    // --- FIX: Adjusted the grid rendering logic for padding and fixed columns ---
+
     /**
      * Renders a section of the SVG as a grid for a given list category (grid layout).
      * @returns {{section: string, height: number}} SVG markup and height for the section.
@@ -444,9 +470,11 @@ export const handler = async (event, context) => {
     const renderSectionGrid = (title, entries, yStart) => {
       let section = "";
       let currentY = yStart;
-      
+
       // Use padding for the section header as well
-      section += `<rect x="${svgPadding}" y="${currentY}" width="${width - svgPadding * 2}" height="${headerHeight}" fill="${sectionBg}" rx="8"/>`;
+      section += `<rect x="${svgPadding}" y="${currentY}" width="${
+        width - svgPadding * 2
+      }" height="${headerHeight}" fill="${sectionBg}" rx="8"/>`;
       section += `<text x="${svgPadding + 16}" y="${
         currentY + headerHeight / 2 + headerFontSize / 2 - 2
       }" font-size="${headerFontSize}" fill="${primaryColor}" font-weight="bold">${escapeXml(
@@ -464,7 +492,7 @@ export const handler = async (event, context) => {
         const cols = gridColumns;
         const rows = Math.ceil(n / cols);
         let cardIndex = 0;
-        
+
         for (let row = 0; row < rows; row++) {
           for (let col = 0; col < cols; col++) {
             if (cardIndex >= n) break;
@@ -488,81 +516,83 @@ export const handler = async (event, context) => {
             cardIndex++;
           }
         }
-        currentY += rows * gridCardHeight + (rows > 0 ? (rows - 1) * gridGap : 0);
+        currentY +=
+          rows * gridCardHeight + (rows > 0 ? (rows - 1) * gridGap : 0);
       }
       return { section, height: currentY - yStart };
     };
 
-    // --- MAIN RENDER LOGIC ---
+    // --- REFACTOR: Logika render dipisahkan dari pembuatan SVG akhir ---
     let y = titleMargin;
     let svgSections = "";
+    let svgWidth = width;
+    let svgHeight = 0;
 
     if (layout === "grid") {
-      const svgWidth = width; // Use the fixed width
-
-      // Main Title
-      svgSections += `<text x="${svgPadding}" y="${y}" font-size="${titleFontSize}" fill="${primaryColor}" font-weight="bold" style="letter-spacing:1px;">${escapeXml(titleText)}</text>`;
+      svgSections += `<text x="${svgPadding}" y="${y}" font-size="${titleFontSize}" fill="${primaryColor}" font-weight="bold" style="letter-spacing:1px;">${escapeXml(
+        titleText
+      )}</text>`;
       y += titleFontSize + sectionGap;
-
-      // Watching
       const watchingResult = renderSectionGrid("Watching", watchingList, y);
       svgSections += watchingResult.section;
       y += watchingResult.height + sectionGap;
-
-      // Completed
       const completedResult = renderSectionGrid("Completed", completedList, y);
       svgSections += completedResult.section;
       y += completedResult.height + sectionGap;
-
-      // Planning
       const planningResult = renderSectionGrid("Planning", planningList, y);
       svgSections += planningResult.section;
       y += planningResult.height;
-
-      const svgHeight = y + svgPadding;
-
-      const svg = `
-        <svg width="${svgWidth}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgWidth} ${svgHeight}" style="font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', sans-serif;">
-            <rect width="100%" height="100%" fill="${bgColor}" rx="18" ry="18" />
-            ${svgSections}
-        </svg>
-      `;
-      return { statusCode: 200, headers, body: svg };
-
+      svgHeight = y + svgPadding;
     } else {
-      // Default: list/row/table layout
       const mainTitleY = y + titleFontSize;
-
-      // Main title and table header
-      svgSections += `<text x="24" y="${mainTitleY}" font-size="${titleFontSize}" fill="${primaryColor}" font-weight="bold" style="letter-spacing:1px;">${escapeXml(titleText)}</text>`;
-      svgSections += tableHeader(mainTitleY + 2);
-      y = mainTitleY + 12;
-
-      // Watching
+      svgSections += `<text x="24" y="${mainTitleY}" font-size="${titleFontSize}" fill="${primaryColor}" font-weight="bold" style="letter-spacing:1px;">${escapeXml(
+        titleText
+      )}</text>`;
+      if (useTableHeader) {
+        svgSections += tableHeader(mainTitleY + 12);
+        y = mainTitleY + 42;
+      } else {
+        y = mainTitleY + 12;
+      }
       const watchingResult = renderSectionList("Watching", watchingList, y);
       svgSections += watchingResult.section;
       y += watchingResult.height + sectionGap;
-
-      // Completed
       const completedResult = renderSectionList("Completed", completedList, y);
       svgSections += completedResult.section;
       y += completedResult.height + sectionGap;
-
-      // Planning
       const planningResult = renderSectionList("Planning", planningList, y);
       svgSections += planningResult.section;
       y += planningResult.height;
-
-      const svgHeight = y + 24;
-
-      const svg = `
-        <svg width="${width}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${svgHeight}" style="font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', sans-serif;">
-            <rect width="100%" height="100%" fill="${bgColor}" rx="18" ry="18" />
-            ${svgSections}
-        </svg>
-      `;
-      return { statusCode: 200, headers, body: svg };
+      svgHeight = y + 24;
     }
+
+    // --- NEW: Membuat elemen background secara dinamis ---
+    let backgroundElement = "";
+    if (base64BgImage) {
+      // Jika ada gambar background, gunakan <image> dengan overlay
+      backgroundElement = `
+        <defs>
+          <clipPath id="bgClip">
+            <rect width="100%" height="100%" rx="18" ry="18" />
+          </clipPath>
+        </defs>
+        <image href="${base64BgImage}" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" clip-path="url(#bgClip)" />
+        <rect width="100%" height="100%" fill="black" opacity="0.6" rx="18" ry="18" />
+      `;
+    } else {
+      // Jika tidak ada, gunakan warna solid seperti biasa
+      backgroundElement = `<rect width="100%" height="100%" fill="${bgColor}" rx="18" ry="18" />`;
+    }
+
+    // --- REFACTOR: Konstruksi SVG final digabung di sini ---
+    const svg = `
+      <svg width="${svgWidth}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgWidth} ${svgHeight}" style="font-family: 'Segoe UI', Ubuntu, 'Helvetica Neue', sans-serif;">
+        ${backgroundElement}
+        ${svgSections}
+      </svg>
+    `;
+
+    return { statusCode: 200, headers, body: svg };
   } catch (error) {
     console.error(error);
     const errorBody = createErrorCard(

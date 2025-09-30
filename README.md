@@ -67,6 +67,9 @@ All customization is done via _query parameters_. Colors use hex values (without
 | `titleFontSize`  | Main title font size.              | `28`                   |
 | `titleMargin`    | Top margin for main title.         | `32`                   |
 | `sectionGap`     | Gap between categories (in px).    | `18`                   |
+| `bgImage`        | Background image URL (will be inlined as base64, overrides `bgColor`). | _(none)_              |
+| `useTableHeader` | Show table column headers in list layout (`true`/`false`).             | `true`                |
+
 
 ---
 
